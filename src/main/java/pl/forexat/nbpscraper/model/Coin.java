@@ -13,10 +13,15 @@ public class Coin {
 	private static final String URL_DIR="C:\\nbpproject\\url.txt";
 	private static final Logger log = Logger.getLogger(Coin.class);
 	private String coinPage;
+	public static final int SHOP_LIMITS=2;
 
 	public String getCoinPage() {
 		log.info("Using coin page: " + this.coinPage);
 		return this.coinPage;
+	}
+	
+	public int getCoinLimits() {
+		return SHOP_LIMITS;
 	}
 
 	public void setCoinPage() {
@@ -49,27 +54,4 @@ public class Coin {
 	public boolean isCoinPageSet() {
 		return StringUtils.isNotBlank(this.coinPage);
 	}
-
-	// public <MuleEventContext> Object onCall(MuleEventContext eventContext)
-	// throws Exception
-	// {
-	// try
-	// {
-	// String newCoinPage = eventContext.getMessage().getPayloadAsString();
-	// log.info("New coin page: " + this.coinPage);
-	// }
-	// catch (Exception e)
-	// {
-	// e.printStackTrace();
-	// return Boolean.valueOf(false);
-	// }
-	// String newCoinPage;
-	// if (this.coinPage == null)
-	// {
-	// this.coinPage = newCoinPage;
-	// return Boolean.valueOf(true);
-	// }
-	// this.coinPage = newCoinPage;
-	// return Boolean.valueOf(false);
-	// }
 }

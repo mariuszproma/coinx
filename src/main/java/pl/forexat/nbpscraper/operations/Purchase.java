@@ -19,14 +19,13 @@ import pl.forexat.nbpscraper.AccountConfiguration;
 import pl.forexat.nbpscraper.model.Coin;
 
 public class Purchase {
-	private static final String CART_SUMMARY_URL = "https://kolekcjoner.nbp.pl/checkout/onepage/index/";
+	private static final String CART_SUMMARY_URL = "https://kolekcjoner.nbp.pl/pl/checkout/onepage/";
 	private static final Logger log = Logger.getLogger(Purchase.class);
 	private static final String ADDTOCARD_BUTTON = "product-addtocart-button";
 	private AccountConfiguration config;
 	private WebDriver driver;
 	private WebDriverWait waitDriver;
 	private Coin coin;
-	private static final String QUANTITY="2";
 
 	public void setConfig(AccountConfiguration config) {
 		this.config = config;
@@ -60,19 +59,19 @@ public class Purchase {
 //		this.driver.switchTo().window(this.config.getPurchaseTab());
 			
 			try{
-				putCoinIntoCart();
+				this.driver.get(this.coin.getCoinPage());
+				//if(isCartEmpty())
+					putCoinIntoCart();
 			} catch(StaleElementReferenceException e){
 			} catch (InterruptedException e) {
 			}
-			checkCard();
+			//checkCart();
 			try{
 			log.info("Will try to log in");
 			logIn();
 			} catch (WebDriverException e){
 				
 			}
-			log.info("Will try again");
-			logIn();
 			
 		try {
 			//fillOrder();
@@ -95,33 +94,44 @@ public class Purchase {
 			log.info("Waiting for password to be typed");
 		}
 	}
-
-	private void putCoinIntoCart() throws InterruptedException {
-		this.driver.get(this.coin.getCoinPage());
+	
+	private boolean isCartEmpty() {
 		String cartSummary = this.driver.findElement(By.className("cart-summary")).getText();
 		log.info("Cart summary: " + cartSummary);
-		if (cartSummary.toLowerCase().startsWith("pusty")) {
-			log.info("Cart is empty");
+		return cartSummary.toLowerCase().startsWith("pusty");
+	}
+	
+	private WebElement retrieveBuyButton() {
+		try{
+			WebElement element = this.driver.findElement(By.id("product-addtocart-button"));
+			return element;
+		} catch (NoSuchElementException e){
+			return null;
+		}
+	}
+	
+	private void increaseAmount() {
+		List<WebElement> buttons = this.driver.findElements(By.className("quantity-change-button"));
+		ExpectedCondition<WebElement> shippingButton = ExpectedConditions
+				.elementToBeClickable((WebElement) buttons.get(1));
+		waitAndClick(shippingButton);
+	}
+
+	private void putCoinIntoCart() throws InterruptedException {
 			//Thread.sleep(300);
 			//this.driver.findElement(By.id("quantity-input")).sendKeys(new CharSequence[] {QUANTITY});
 			//this.driver.findElements(By.className("quantity-change-button")).get(1).click();;
 			//click(element);
 			//Thread.sleep(300);
-			WebElement element;
-			while(true){
 				log.info("Sprawdzam dostepnosc");
-			try{
-				element = this.driver.findElement(By.id("product-addtocart-button"));
-			} catch (NoSuchElementException e){
-				log.info("Niedostepne");
-				Thread.sleep(500);
-				this.driver.get(this.coin.getCoinPage());
-				continue;
-			}
-				log.info("Kupuje");
-				break;
-			}
-			click(element);
+				WebElement element = retrieveBuyButton();
+				if(element==null) {
+					return;
+				}
+				if(coin.getCoinLimits()>1) {
+					increaseAmount();
+				}
+				click(element);
 			//driver.close();
 			//his.driver.get(this.coin.getCoinPage());
 //			Thread.sleep(300);
@@ -129,17 +139,10 @@ public class Purchase {
 			//this.driver.findElement(By.className("add-to-basket-button")).click();;
 			//this.driver.findElement(By.id("product-addtocart-button")).click();
 			log.info("Coin added to cart");
-		} else {
-			log.info("Cart already was full");
-		}
 	}
 	
-	private void checkCard() {
-		this.driver.get("https://kolekcjoner.nbp.pl/pl/checkout/cart");
-		this.driver.findElement(By.id("qty-change-plus")).click();
-		this.driver.findElements(By.className("nbp-button")).get(0).click();
-		log.info("Koszyk zaktualizowany");
-		//this.driver.findElements(By.className("nbp-button")).get(2).click();
+	private void checkCart() {
+		this.driver.get(CART_SUMMARY_URL);
 	}
 	
 	private void click(By condition){
